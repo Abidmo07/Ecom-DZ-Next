@@ -44,12 +44,15 @@ export default function Home() {
         <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">Our Collection</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {products.map((product) => (
-            <ProductCard 
-              key={product.id}
+            <Link href={`product/${product.id}`} key={product.id}>
+              <ProductCard 
+              
               image={product.image}
               name={product.name}
               price={product.price}
             />
+            </Link>
+          
           ))}
         </div>
       </div>
