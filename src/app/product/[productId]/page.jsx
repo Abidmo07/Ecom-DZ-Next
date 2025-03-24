@@ -6,6 +6,9 @@ import React, { useEffect, useState } from 'react'
 export default function ProductPage() {
     const {productId}=useParams();
     const [product,setProduct]=useState({});
+    const [wilayas,setWilayas]=useState([]);
+    const [selectedWilaya,setSelectedWilaya]=useState({});
+    const [quantity,setQuantity]=useState();
     const fetchProductInfos=async()=>{
         await axiosClient.get(`/product/${productId}`).then((response)=>{
             console.log(response.data.product);
@@ -13,10 +16,24 @@ export default function ProductPage() {
         }).catch((error)=>console.error(error))
 
     }
+    const fetchWilayas=async()=>{
+       await axiosClient.get('/wilayas').then((response)=>{
+        setWilayas(response.data);
+        console.log(response.data)
+       }).catch((error)=>console.error(error))
+    }
+    const calculateTotalPrice=(product_price,delivery_price,quan=1)=>{
+      return (
+        (Number(product_price)*Number(quan))+Number(delivery_price)
+      )
+
+    }
 
     useEffect(()=>{
         
        fetchProductInfos();
+       fetchWilayas();
+      
     },[productId])
    
   return (
@@ -31,7 +48,7 @@ export default function ProductPage() {
             {product.description}
           </p>
           <h2 className="text-2xl font-semibold text-blue-600 mt-4">
-            50,000 دج
+            {product.price} دج
           </h2>
           <p className="text-sm text-gray-500">المخزون المتبقي: 200</p>
         </div>
@@ -59,14 +76,21 @@ export default function ProductPage() {
           className="w-full p-3 border border-gray-300 rounded-lg"
           required
         />
+   
+        <select onChange={(e)=>{
+          const selected=wilayas.find(w=>w.name===e.target.value)
+           setSelectedWilaya(selected)
+        }} className='w-full p-3 border border-gray-300 rounded-lg' name="wilayas">
+          <option value="ولايتك">ولايتك</option>
+          {wilayas.map((wilaya)=>{
+            return(
+              <option   key={wilaya.id} value={wilaya.name}>{wilaya.name}</option>
+            )
+          })}
+
+        </select>
         <input
-          type="text"
-          placeholder="ولايتك"
-          className="w-full p-3 border border-gray-300 rounded-lg"
-          required
-        />
-        <input
-          type="tel"
+          type='tel'
           placeholder="رقم الهاتف"
           className="w-full p-3 border border-gray-300 rounded-lg"
           required
@@ -76,10 +100,22 @@ export default function ProductPage() {
           className="w-full p-3 border border-gray-300 rounded-lg"
           required
         ></textarea>
+        <input type="number" name="quantity"
+        placeholder='الكمية'
+        className="w-full p-3 border border-gray-300 rounded-lg"
+        value={quantity || 1}
+        onChange={(e)=>{
+         setQuantity(e.target.value)
+        }}
+        
+        />
+        <div className="text-lg font-semibold text-gray-900">
+          سعر التوصيل: {selectedWilaya?.delivery_price ||0} دج
+        </div>
 
         {/* Total Price */}
         <div className="text-lg font-semibold text-gray-900">
-          السعر الإجمالي: 50,000 دج
+          السعر الإجمالي: {calculateTotalPrice(product.price,selectedWilaya?.delivery_price||0,quantity)} دج
         </div>
 
         <button
