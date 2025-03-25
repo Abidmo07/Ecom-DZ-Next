@@ -7,8 +7,8 @@ export default function Navbar() {
       <div className="space-x-6">
         <Link href="/" className="text-white font-medium hover:text-gray-200 transition duration-300">الرئيسية</Link>
         <Link href="/categories" className="text-white font-medium hover:text-gray-200 transition duration-300">التصنيفات</Link>
-        <Link href="/about" className="text-white font-medium hover:text-gray-200 transition duration-300">من نحن</Link>
-        <Link href="/contact" className="text-white font-medium hover:text-gray-200 transition duration-300">اتصل بنا</Link>
+        <Link href={'/about'} className="text-white font-medium hover:text-gray-200 transition duration-300">من نحن</Link>
+        <Link href={'/contact'} className="text-white font-medium hover:text-gray-200 transition duration-300">اتصل بنا</Link>
       </div>
     </nav>
   );
