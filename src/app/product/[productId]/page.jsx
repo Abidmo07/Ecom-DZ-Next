@@ -1,14 +1,25 @@
 "use client";
 import { axiosClient } from "@/app/axios";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 export default function ProductPage() {
+  const router=useRouter();
   const { productId } = useParams();
   const [product, setProduct] = useState({});
   const [wilayas, setWilayas] = useState([]);
   const [selectedWilaya, setSelectedWilaya] = useState({});
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState();
+  const [orderInfos,setOrderInfos]=useState({
+    custommer_name:'',
+    custommer_wilayas:'',
+    custommer_phone:'',
+    custommer_address:'',
+    status:'pending',
+    product_id:productId,
+    quantity:quantity,
+    total_price:''
+  });
 
   const fetchProductInfos = async () => {
     try {
@@ -36,6 +47,28 @@ export default function ProductPage() {
     fetchProductInfos();
     fetchWilayas();
   }, [productId]);
+  useEffect(() => {
+    setOrderInfos((prev) => ({
+      ...prev,
+      quantity: quantity || 1, // Ensure quantity is at least 1
+      total_price: calculateTotalPrice(
+        product.price,
+        selectedWilaya?.delivery_price || 0,
+        quantity || 1
+      ),
+    }));
+  }, [selectedWilaya, quantity, product.price]);
+  
+  const handleOrderSubmition=async(e)=>{
+     e.preventDefault();
+      await axiosClient.post('/order',orderInfos).then((response)=>{
+        console.log(response.data);
+                
+          const orderId=response.data.order.id
+          console.log(orderId)
+          router.push(`/thankyou/${orderId}`)
+      }).catch((error)=>console.error(error))
+  }
 
   return (
     <div className="max-w-5xl mx-auto p-6 text-right" dir="rtl">
@@ -68,18 +101,22 @@ export default function ProductPage() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           قم بإتمام الطلب
         </h2>
-        <form className="space-y-4">
+        <form onSubmit={handleOrderSubmition} className="space-y-4">
           <input
             type="text"
             placeholder="اسمك الكامل"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             required
+            value={orderInfos.custommer_name}
+            onChange={(e)=>setOrderInfos({...orderInfos,custommer_name:e.target.value})}
           />
 
           <select
             onChange={(e) => {
               const selected = wilayas.find((w) => w.name === e.target.value);
               setSelectedWilaya(selected);
+              setOrderInfos({...orderInfos,custommer_wilayas:selected.name})
+              
             }}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             name="wilayas"
@@ -97,12 +134,16 @@ export default function ProductPage() {
             placeholder="رقم الهاتف"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             required
+            value={orderInfos.custommer_phone}
+            onChange={(e)=>setOrderInfos({...orderInfos,custommer_phone:e.target.value})}
           />
 
           <textarea
             placeholder="عنوان التوصيل"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             required
+            value={orderInfos.custommer_address}
+            onChange={(e)=>setOrderInfos({...orderInfos,custommer_address:e.target.value})}
           ></textarea>
 
           <input
@@ -110,9 +151,9 @@ export default function ProductPage() {
             name="quantity"
             placeholder="الكمية"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            min="1"
-            max="10"
+           
             value={quantity}
+            defaultValue={1}
             onChange={(e) => setQuantity(e.target.value)}
           />
 
@@ -122,15 +163,12 @@ export default function ProductPage() {
 
           <div className="text-lg font-semibold text-gray-900">
             السعر الإجمالي:{" "}
-            {calculateTotalPrice(
-              product.price,
-              selectedWilaya?.delivery_price || 0,
-              quantity
-            )}{" "}
+            {orderInfos.total_price}{" "}
             دج
           </div>
 
           <button
+         
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-transform duration-300 hover:scale-105"
           >
